@@ -9,11 +9,13 @@
             <Label Text="Nom" FontSize="16"/>
             <Entry Text="{Binding Nom, Mode=TwoWay}" Placeholder="Votre nom"/>
             <Label Text="Date de naissance" FontSize="16"/>
-            <DatePicker Date="{Binding DateNaissance, Mode=TwoWay}"/>
+            <DatePicker Date="{Binding DateNaissance, Mode=TwoWay}"
+                        MaximumDate="{Binding DateMaximale}"/>
             <Button Text="Calculer" Command="{Binding CalculerCommand}"/>
             <VerticalStackLayout Spacing="6" IsVisible="{Binding ResultatVisible}">
                 <Label Text="{Binding Resultat}" FontSize="20"/>
                 <Label Text="{Binding Statut}" FontSize="16" FontAttributes="Bold"/>
+                <Label Text="{Binding ProchainAnniversaire}" FontSize="16"/>
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

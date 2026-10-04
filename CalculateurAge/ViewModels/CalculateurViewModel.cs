@@ -15,6 +15,7 @@ public class CalculateurViewModel : BaseViewModel
     private string _resultat = "";
     private bool _resultatVisible;
     private string _statut = "";
+    private string _prochainAnniversaire = "";
 
     // Propriétés publiques : ce que le XAML voit.
     public string Nom
@@ -26,7 +27,7 @@ public class CalculateurViewModel : BaseViewModel
     public DateTime DateNaissance
     {
         get => _dateNaissance;
-        set => SetField(ref _dateNaissance, value);
+        set { if (SetField(ref _dateNaissance, value)) CalculerCommand.Rafraichir(); }
     }
 
     public string Resultat
@@ -48,6 +49,16 @@ public class CalculateurViewModel : BaseViewModel
         set => SetField(ref _statut, value);
     }
 
+    // Message sur le prochain anniversaire.
+    public string ProchainAnniversaire
+    {
+        get => _prochainAnniversaire;
+        set => SetField(ref _prochainAnniversaire, value);
+    }
+
+    // Borne supérieure du DatePicker : on ne naît pas dans le futur.
+    public DateTime DateMaximale => _aujourdhui();
+
     // Lié à Button.Command dans le XAML.
     public RelayCommand CalculerCommand { get; }
 
@@ -59,7 +70,8 @@ public class CalculateurViewModel : BaseViewModel
         _dateNaissance = _aujourdhui().AddYears(-20);
         CalculerCommand = new RelayCommand(
             Calculer,
-            () => !string.IsNullOrWhiteSpace(Nom));
+            () => !string.IsNullOrWhiteSpace(Nom)
+                  && DateNaissance.Date <= _aujourdhui().Date);
     }
 
     // La logique métier : aucun contrôle d'interface ici.
@@ -68,6 +80,8 @@ public class CalculateurViewModel : BaseViewModel
         int age = CalculAge.Age(DateNaissance, _aujourdhui());
         Resultat = $"{Nom}, vous avez {age} ans";
         Statut = CalculAge.EstMajeur(age) ? "Majeur" : "Mineur";
+        ProchainAnniversaire = CalculAge.MessageAnniversaire(
+            CalculAge.JoursAvantAnniversaire(DateNaissance, _aujourdhui()));
         ResultatVisible = true;
     }
 }
