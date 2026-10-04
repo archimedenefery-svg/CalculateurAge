@@ -11,8 +11,10 @@
             <Label Text="Date de naissance" FontSize="16"/>
             <DatePicker Date="{Binding DateNaissance, Mode=TwoWay}"/>
             <Button Text="Calculer" Command="{Binding CalculerCommand}"/>
-            <Label Text="{Binding Resultat}" FontSize="20"
-                   IsVisible="{Binding ResultatVisible}"/>
+            <VerticalStackLayout Spacing="6" IsVisible="{Binding ResultatVisible}">
+                <Label Text="{Binding Resultat}" FontSize="20"/>
+                <Label Text="{Binding Statut}" FontSize="16" FontAttributes="Bold"/>
+            </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
 
