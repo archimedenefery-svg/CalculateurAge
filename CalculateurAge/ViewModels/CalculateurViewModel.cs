@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using CalculateurAge.Models;
 
 namespace CalculateurAge.ViewModels;
@@ -66,9 +67,16 @@ public class CalculateurViewModel : BaseViewModel
     // Borne supérieure du DatePicker : on ne naît pas dans le futur.
     public DateTime DateMaximale => _aujourdhui();
 
+    // Historique des calculs, le plus récent en premier.
+    // ObservableCollection prévient la vue à chaque ajout/suppression.
+    public ObservableCollection<ResultatAge> Historique { get; } = new();
+    public bool HistoriqueVisible => Historique.Count > 0;
+    public const int TailleMaxHistorique = 20;
+
     // Lié à Button.Command dans le XAML.
     public RelayCommand CalculerCommand { get; }
     public RelayCommand EffacerCommand { get; }
+    public RelayCommand ViderHistoriqueCommand { get; }
 
     public CalculateurViewModel() : this(() => DateTime.Today) { }
 
@@ -84,17 +92,31 @@ public class CalculateurViewModel : BaseViewModel
         EffacerCommand = new RelayCommand(
             Effacer,
             () => !string.IsNullOrEmpty(Nom) || ResultatVisible);
+        ViderHistoriqueCommand = new RelayCommand(
+            () => Historique.Clear(),
+            () => HistoriqueVisible);
+
+        // Toute modification de la liste met à jour HistoriqueVisible
+        // et l'état du bouton « Vider l'historique ».
+        Historique.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HistoriqueVisible));
+            ViderHistoriqueCommand.Rafraichir();
+        };
     }
 
     // La logique métier : aucun contrôle d'interface ici.
     private void Calculer()
     {
-        int age = CalculAge.Age(DateNaissance, _aujourdhui());
-        Resultat = $"{Nom}, vous avez {age} ans";
-        Statut = CalculAge.EstMajeur(age) ? "Majeur" : "Mineur";
-        ProchainAnniversaire = CalculAge.MessageAnniversaire(
-            CalculAge.JoursAvantAnniversaire(DateNaissance, _aujourdhui()));
+        var r = ResultatAge.Calculer(Nom, DateNaissance, _aujourdhui());
+        Resultat = r.Message;
+        Statut = r.Statut;
+        ProchainAnniversaire = r.MessageAnniversaire;
         ResultatVisible = true;
+
+        Historique.Insert(0, r);
+        if (Historique.Count > TailleMaxHistorique)
+            Historique.RemoveAt(Historique.Count - 1);
     }
 
     // Remet le formulaire et le résultat à leur état initial.

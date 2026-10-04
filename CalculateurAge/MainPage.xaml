@@ -20,6 +20,22 @@
                 <Label Text="{Binding Statut}" FontSize="16" FontAttributes="Bold"/>
                 <Label Text="{Binding ProchainAnniversaire}" FontSize="16"/>
             </VerticalStackLayout>
+
+            <!-- Historique : BindableLayout plutôt que CollectionView,
+                 qui se comporte mal à l'intérieur d'un ScrollView. -->
+            <VerticalStackLayout Spacing="6" Margin="0,16,0,0"
+                                 IsVisible="{Binding HistoriqueVisible}">
+                <Label Text="Historique" FontSize="18" FontAttributes="Bold"/>
+                <VerticalStackLayout Spacing="4"
+                                     BindableLayout.ItemsSource="{Binding Historique}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Label Text="{Binding Resume}" FontSize="14"/>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+                <Button Text="Vider l'historique" Command="{Binding ViderHistoriqueCommand}"/>
+            </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
 
