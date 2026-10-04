@@ -21,7 +21,14 @@ public class CalculateurViewModel : BaseViewModel
     public string Nom
     {
         get => _nom;
-        set { if (SetField(ref _nom, value)) CalculerCommand.Rafraichir(); }
+        set
+        {
+            if (SetField(ref _nom, value))
+            {
+                CalculerCommand.Rafraichir();
+                EffacerCommand.Rafraichir();
+            }
+        }
     }
 
     public DateTime DateNaissance
@@ -39,7 +46,7 @@ public class CalculateurViewModel : BaseViewModel
     public bool ResultatVisible
     {
         get => _resultatVisible;
-        set => SetField(ref _resultatVisible, value);
+        set { if (SetField(ref _resultatVisible, value)) EffacerCommand.Rafraichir(); }
     }
 
     // « Majeur » ou « Mineur ».
@@ -61,17 +68,22 @@ public class CalculateurViewModel : BaseViewModel
 
     // Lié à Button.Command dans le XAML.
     public RelayCommand CalculerCommand { get; }
+    public RelayCommand EffacerCommand { get; }
 
     public CalculateurViewModel() : this(() => DateTime.Today) { }
 
     internal CalculateurViewModel(Func<DateTime> aujourdhui)
     {
         _aujourdhui = aujourdhui;
-        _dateNaissance = _aujourdhui().AddYears(-20);
+        _dateNaissance = DateParDefaut();
         CalculerCommand = new RelayCommand(
             Calculer,
             () => !string.IsNullOrWhiteSpace(Nom)
                   && DateNaissance.Date <= _aujourdhui().Date);
+        // Rien à effacer tant que le formulaire est vierge.
+        EffacerCommand = new RelayCommand(
+            Effacer,
+            () => !string.IsNullOrEmpty(Nom) || ResultatVisible);
     }
 
     // La logique métier : aucun contrôle d'interface ici.
@@ -84,4 +96,17 @@ public class CalculateurViewModel : BaseViewModel
             CalculAge.JoursAvantAnniversaire(DateNaissance, _aujourdhui()));
         ResultatVisible = true;
     }
+
+    // Remet le formulaire et le résultat à leur état initial.
+    private void Effacer()
+    {
+        Nom = "";
+        DateNaissance = DateParDefaut();
+        Resultat = "";
+        Statut = "";
+        ProchainAnniversaire = "";
+        ResultatVisible = false;
+    }
+
+    private DateTime DateParDefaut() => _aujourdhui().AddYears(-20);
 }
