@@ -1,26 +1,26 @@
+using CalculateurAge.Models;
+using CalculateurAge.Services;
+using CalculateurAge.ViewModels;
+
 namespace CalculateurAge.Views;
 
-// Relie le paramètre "nom" de l'URL à la propriété Nom.
-[QueryProperty(nameof(Nom), "nom")]
-[QueryProperty(nameof(Age), "age")]
-public partial class ResultatPage : ContentPage
+// IQueryAttributable : Shell appelle ApplyQueryAttributes avec les
+// paramètres de navigation. Contrairement à [QueryProperty], aucun
+// passage par une chaîne d'URL : l'objet ResultatAge arrive intact.
+public partial class ResultatPage : ContentPage, IQueryAttributable
 {
-    // Ces propriétés sont remplies par la navigation,
-    // APRÈS le constructeur.
-    public string Nom { get; set; } = "";
-    public string Age { get; set; } = "";
+    private readonly ResultatViewModel _viewModel;
 
-    // Construit l'arbre visuel décrit par le XAML.
-    public ResultatPage() => InitializeComponent();
-
-    // Appelée à CHAQUE affichage de la page.
-    protected override void OnAppearing()
+    public ResultatPage(ResultatViewModel viewModel)
     {
-        base.OnAppearing();
-        lblMessage.Text = $"{Nom}, vous avez {Age} ans";
+        InitializeComponent();
+        BindingContext = _viewModel = viewModel;
     }
 
-    // ".." = revenir à la page précédente.
-    private async void OnRetourClicked(object? s, EventArgs e)
-        => await Shell.Current.GoToAsync("..");
+    // Plomberie uniquement : on transmet la donnée reçue au ViewModel.
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query.TryGetValue(ShellNavigationService.CleResultat, out var valeur))
+            _viewModel.Resultat = valeur as ResultatAge;
+    }
 }

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CalculateurAge.Models;
+using CalculateurAge.Services;
 
 namespace CalculateurAge.ViewModels;
 
@@ -9,6 +10,10 @@ public class CalculateurViewModel : BaseViewModel
 
     // Source de la date du jour : injectable pour pouvoir tester le ViewModel.
     private readonly Func<DateTime> _aujourdhui;
+    private readonly INavigationService _navigation;
+
+    // Dernier résultat calculé, transmis à la page de détail.
+    private ResultatAge? _dernierResultat;
 
     // Champs privés : la vraie donnée.
     private string _nom = "";
@@ -77,11 +82,16 @@ public class CalculateurViewModel : BaseViewModel
     public RelayCommand CalculerCommand { get; }
     public RelayCommand EffacerCommand { get; }
     public RelayCommand ViderHistoriqueCommand { get; }
+    public RelayCommand VoirDetailCommand { get; }
 
-    public CalculateurViewModel() : this(() => DateTime.Today) { }
+    // Constructeur utilisé par l'injection de dépendances (MauiProgram).
+    public CalculateurViewModel(INavigationService navigation)
+        : this(navigation, () => DateTime.Today) { }
 
-    internal CalculateurViewModel(Func<DateTime> aujourdhui)
+    // Constructeur de test : date du jour imposée.
+    internal CalculateurViewModel(INavigationService navigation, Func<DateTime> aujourdhui)
     {
+        _navigation = navigation;
         _aujourdhui = aujourdhui;
         _dateNaissance = DateParDefaut();
         CalculerCommand = new RelayCommand(
@@ -92,6 +102,10 @@ public class CalculateurViewModel : BaseViewModel
         EffacerCommand = new RelayCommand(
             Effacer,
             () => !string.IsNullOrEmpty(Nom) || ResultatVisible);
+        // Le ViewModel décide QUAND naviguer ; le service sait COMMENT.
+        VoirDetailCommand = new RelayCommand(
+            async () => await _navigation.AllerVersResultatAsync(_dernierResultat!),
+            () => _dernierResultat is not null);
         ViderHistoriqueCommand = new RelayCommand(
             () => Historique.Clear(),
             () => HistoriqueVisible);
@@ -113,6 +127,7 @@ public class CalculateurViewModel : BaseViewModel
         Statut = r.Statut;
         ProchainAnniversaire = r.MessageAnniversaire;
         ResultatVisible = true;
+        DefinirDernierResultat(r);
 
         Historique.Insert(0, r);
         if (Historique.Count > TailleMaxHistorique)
@@ -128,6 +143,13 @@ public class CalculateurViewModel : BaseViewModel
         Statut = "";
         ProchainAnniversaire = "";
         ResultatVisible = false;
+        DefinirDernierResultat(null);
+    }
+
+    private void DefinirDernierResultat(ResultatAge? r)
+    {
+        _dernierResultat = r;
+        VoirDetailCommand.Rafraichir();
     }
 
     private DateTime DateParDefaut() => _aujourdhui().AddYears(-20);
